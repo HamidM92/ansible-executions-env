@@ -1,231 +1,53 @@
-🚀 Ansible Execution Environment (VMware Automation)
-📌 What is an Ansible Execution Environment (EE)?
+# README for ansible-executions-env
 
-An Ansible Execution Environment (EE) is a container image that includes:
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Requirements](#requirements)
+3. [Installation](#installation)
+4. [Usage](#usage)
+5. [Troubleshooting](#troubleshooting)
+6. [Contributing](#contributing)
+7. [License](#license)
 
-Ansible Core
-Ansible Runner
-Required Python libraries
-Ansible collections (e.g. VMware modules)
-System dependencies
+## Introduction
+This repository contains an environment for executing Ansible playbooks efficiently and effectively. It is designed to streamline the automation processes and improve deployment times.
 
-👉 It provides a consistent, isolated runtime for running Ansible automation.
+## Requirements
+- Ansible 2.9 or higher
+- Python 3.6 or higher
+- Access to the target machines
 
-🎯 Why do we need Execution Environments?
+## Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/HamidM92/ansible-executions-env.git
+   ```
+2. Navigate to the directory:
+   ```bash
+   cd ansible-executions-env
+   ```
+3. We recommend using a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
 
-In traditional Ansible:
-Dependencies are installed on control nodes manually
-Version conflicts happen (Python, modules, libraries) whenever you install the dependancies for automating Network devices (cisco), VMware, K8s and etc.. as each one 
-required it own dependancies.
-Different environments = different behavior
-With EE:
-Everything is containerized
-Fully portable
-Fully reproducible
-Works seamlessly with:
-AWX and Red Hat Ansible Automation Platform (AAP)
-Basically for VMware you create an execution env which is at the end of the day a container which will run the playbook then exits, same for Cisco and K8s and etc..
+## Usage
+To run your Ansible playbooks:
+```bash
+ansible-playbook playbook.yml
+```
 
-🏗️ Value for Platform Engineering
-Execution Environments enable:
+## Troubleshooting
+- If you encounter issues, ensure that all dependencies are installed correctly.
+- Verify your Ansible configuration and inventory files.
 
-✅ Standardization
-Same environment across:
-Dev
-UAT
-Production
+## Contributing
+We welcome contributions to improve this repository. Please follow the standard fork-and-pull request workflow.
 
-✅ Self-Service Automation
-Teams can run automation safely without breaking dependencies.
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-✅ Scalability (Kubernetes / AWX)
-AWX dynamically spins pods using EE images:
-AWX → Kubernetes Pod → Pull EE Image → Run Playbook
+---
 
-✅ Version Control
-Each EE version = immutable automation runtime
-
-
-📂 Project Structure
-VMware/
-├── execution-environment.yml
-├── requirements.txt
-├── required-collections.yml
-├── bindep.txt
-└── context/   (auto-generated during build)
-
-
-
-📄 File Breakdown & Explanation
-
-1️⃣ execution-environment.yml
-
-📌 Purpose
-"This is the main blueprint that defines how the EE image is built."
-
-version: 3
-
-dependencies:
-  ansible_core:
-    package_pip: ansible-core
-  ansible_runner:
-    package_pip: ansible-runner
-
-  python: requirements.txt
-  galaxy: required-collections.yml
-  system: bindep.txt
-
-images:
-  base_image:
-    name: quay.io/centos/centos:stream9
-    
-🔑 Explanation of parameters
-
-version: 3
-Uses the modern Ansible Builder v3 schema
-Required for structured dependency handling
-images.base_image
-name: quay.io/centos/centos:stream9
-
-👉 Base OS for your container
-
-Why:
-
-Clean minimal OS
-You control everything installed on top
-dependencies.ansible_core
-package_pip: ansible-core
-
-👉 Installs Ansible itself
-
-Why:
-
-Required to run playbooks
-Builder ensures it's properly installed
-dependencies.ansible_runner
-package_pip: ansible-runner
-
-👉 Used by AWX to execute playbooks
-
-Why:
-
-AWX does NOT call Ansible directly
-It uses ansible-runner internally
-dependencies.python
-python: requirements.txt
-
-👉 Installs Python libraries
-
-dependencies.galaxy
-galaxy: required-collections.yml
-
-👉 Installs Ansible collections
-
-dependencies.system
-system: bindep.txt
-
-👉 Installs OS-level packages (via dnf/yum)
-
-2️⃣ requirements.txt
-pyvmomi
-requests
-
-📌 Purpose
-
-Python dependencies required by your automation.
-
-🔑 Explanation
-pyvmomi
-👉 VMware API SDK (required for vSphere automation)
-requests
-👉 HTTP communication library (used by many modules)
-3️⃣ required-collections.yml
-collections:
-  - name: community.vmware
-  - name: ansible.posix
-📌 Purpose
-
-Defines Ansible collections to install.
-
-🔑 Explanation
-community.vmware
-👉 Provides VMware modules:
-vm creation
-snapshot
-power operations
-ansible.posix
-👉 Provides Linux/Unix modules:
-file operations
-permissions
-system tasks
-
-4️⃣ bindep.txt
-gcc [platform:rpm]
-python3-devel [platform:rpm]
-openssl-devel [platform:rpm]
-libffi-devel [platform:rpm]
-git [platform:rpm]
-sshpass [platform:rpm]
-
-
-📌 Purpose
-Installs system-level packages needed during build/runtime.
-
-🔑 Explanation
-gcc
-👉 Required to compile Python packages
-python3-devel
-👉 Python headers for building modules
-openssl-devel
-👉 Required for SSL/TLS (used by VMware API)
-libffi-devel
-👉 Needed by cryptography libraries
-git
-👉 Required if pulling roles/collections from Git
-sshpass
-👉 Used for SSH automation (password-based)
-
-=========================================================================================================================================================================
-5️⃣ context/ (Auto-generated)
-📌 Purpose
-
-Generated by:
-
-ansible-builder build
-Contains:
-Containerfile (Dockerfile equivalent)
-Build scripts
-Processed dependencies
-
-👉 You do NOT edit this manually.
-
-⚙️ Build Process
-ansible-builder build -t ee-vmware:v1
-What happens internally:
-Create build context
-Pull base image
-Install system packages
-Install Python dependencies
-Install Ansible
-Install collections
-Build final container image
-🧠 How AWX Uses This
-AWX job starts
-AWX creates Kubernetes Pod
-Pod pulls EE image
-ansible-runner executes playbook
-🚀 Benefits Summary
-Feature	Benefit
-Containerized EE	No dependency conflicts
-Versioned images	Reproducible automation
-AWX integration	Scalable execution
-Isolated runtime	Secure execution
-Portable	Works anywhere
-🏁 Conclusion
-
-This Execution Environment provides:
-
-A standardized automation runtime
-VMware-ready automation stack
-Full compatibility with AWX / AAP
-A foundation for platform engineering automation
+For further questions, please open an issue in this repository or contact the maintainers.
