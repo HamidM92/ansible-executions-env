@@ -45,7 +45,7 @@ AWX → Kubernetes Pod → Pull EE Image → Run Playbook
 ✅ Version Control
 Each EE version = immutable automation runtime
 
-=========================================================================================================================================================================
+
 📂 Project Structure
 VMware/
 ├── execution-environment.yml
@@ -54,7 +54,7 @@ VMware/
 ├── bindep.txt
 └── context/   (auto-generated during build)
 
-=========================================================================================================================================================================
+
 
 📄 File Breakdown & Explanation
 
@@ -158,7 +158,7 @@ ansible.posix
 file operations
 permissions
 system tasks
-=========================================================================================================================================================================
+
 4️⃣ bindep.txt
 gcc [platform:rpm]
 python3-devel [platform:rpm]
