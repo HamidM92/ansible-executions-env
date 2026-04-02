@@ -1,0 +1,6 @@
+gcc [platform:rpm]
+python3-devel [platform:rpm]
+openssl-devel [platform:rpm]
+libffi-devel [platform:rpm]
+git [platform:rpm]
+sshpass [platform:rpm]

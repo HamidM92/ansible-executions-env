@@ -1,0 +1,11 @@
+# this file contains the Nessesary python packages
+
+#ansibe-core for the Ansible runtime
+ansible-core
+
+#pyvmomi for VMware API SDK
+pyvmomi
+
+# requests for HTTP/API operations
+requests
+

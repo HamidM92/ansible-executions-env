@@ -1,0 +1,7 @@
+---
+
+collections:
+  # VMware collection which will install the plug-in,roles,modules,etc..
+  - name: community.vmware
+  # Linux tasks module which is often needed in automation
+  - name: ansible.posix
