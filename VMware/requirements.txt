@@ -1,5 +1,3 @@
-ansible-core
 pyvmomi
 requests
-ansible-runner
 
