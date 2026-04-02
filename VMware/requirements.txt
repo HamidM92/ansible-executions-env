@@ -6,6 +6,9 @@ ansible-core
 #pyvmomi for VMware API SDK
 pyvmomi
 
-# requests for HTTP/API operations
+#requests for HTTP/API operations
 requests
+
+#ansible runner
+ansible-runner
 
