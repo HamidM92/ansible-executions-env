@@ -1,66 +1,231 @@
-# Ansible Execution Environment for VMware Automation
+🚀 Ansible Execution Environment (VMware Automation)
+📌 What is an Ansible Execution Environment (EE)?
 
-## Table of Contents
-1. [Introduction](#introduction)
-2. [Configuration Files](#configuration-files)
-   - [ansible.cfg](#ansiblecfg)
-   - [requirements.yml](#requirementsyml)
-   - [Dockerfile](#dockerfile)
-3. [Build Process](#build-process)
-4. [AWX Integration](#awx-integration)
-5. [Benefits](#benefits)
+An Ansible Execution Environment (EE) is a container image that includes:
 
-## Introduction
-The Ansible Execution Environment (EE) for VMware is a specialized environment designed to automate processes in VMware infrastructure using Ansible. This environment allows for the seamless execution of playbooks and roles to manage virtual machines, networks, and storage resources effectively.
+Ansible Core
+Ansible Runner
+Required Python libraries
+Ansible collections (e.g. VMware modules)
+System dependencies
 
-## Configuration Files
-Configuration files define the behavior and capabilities of your Ansible Execution Environment. Here are some of the key files you will encounter:
+👉 It provides a consistent, isolated runtime for running Ansible automation.
 
-### ansible.cfg
-```ini
-[defaults]
-inventory = ./inventory
-remote_user = ansible
-```
-- **Purpose**: Sets default configurations such as inventory location and remote user for Ansible operations.
+🎯 Why do we need Execution Environments?
 
-### requirements.yml
-```yaml
----
-roles:
-  - name: geerlingguy.vmware
-    src: geerlingguy/vmware
-    version: latest
-```
-- **Purpose**: Lists the Ansible roles required for executing specific tasks related to VMware environments.
+In traditional Ansible:
+Dependencies are installed on control nodes manually
+Version conflicts happen (Python, modules, libraries) whenever you install the dependancies for automating Network devices (cisco), VMware, K8s and etc.. as each one 
+required it own dependancies.
+Different environments = different behavior
+With EE:
+Everything is containerized
+Fully portable
+Fully reproducible
+Works seamlessly with:
+AWX and Red Hat Ansible Automation Platform (AAP)
+Basically for VMware you create an execution env which is at the end of the day a container which will run the playbook then exits, same for Cisco and K8s and etc..
 
-### Dockerfile
-```Dockerfile
-FROM ansible/ansible-runner:latest
-COPY . /app
-WORKDIR /app
-RUN ansible-galaxy install -r requirements.yml
-```
-- **Purpose**: Defines the base Docker image and the build process to ensure the environment has all necessary dependencies installed.
+🏗️ Value for Platform Engineering
+Execution Environments enable:
 
-## Build Process
-1. Clone the repository: `git clone https://github.com/HamidM92/ansible-executions-env.git`
-2. Navigate to the directory: `cd ansible-executions-env`
-3. Build the Docker image: `docker build -t ansible-vmware-ee .`
-4. Run a container from the image: `docker run --rm -it ansible-vmware-ee`
+✅ Standardization
+Same environment across:
+Dev
+UAT
+Production
 
-## AWX Integration
-To integrate with AWX (the open-source version of Ansible Tower):
-1. Ensure AWX is properly installed and configured.
-2. In AWX, create a new project pointing to your repository.
-3. Set up a new template that utilizes the Ansible Execution Environment.
-4. Execute tasks and view results directly from the AWX dashboard.
+✅ Self-Service Automation
+Teams can run automation safely without breaking dependencies.
 
-## Benefits
-- **Efficiency**: Automates repetitive tasks, increasing productivity.
-- **Consistency**: Ensures all deployments are consistent and follow set configurations.
-- **Scalability**: Easily manage multiple virtual machines across various environments.
-- **Integration**: Seamlessly integrates with existing tools like AWX for streamlined operations.
+✅ Scalability (Kubernetes / AWX)
+AWX dynamically spins pods using EE images:
+AWX → Kubernetes Pod → Pull EE Image → Run Playbook
 
----
-This README outlines the primary components of the Ansible Execution Environment for VMware automation. For further details, please refer to the official [Ansible Documentation](https://docs.ansible.com).
+✅ Version Control
+Each EE version = immutable automation runtime
+
+
+📂 Project Structure
+VMware/
+├── execution-environment.yml
+├── requirements.txt
+├── required-collections.yml
+├── bindep.txt
+└── context/   (auto-generated during build)
+
+
+
+📄 File Breakdown & Explanation
+
+1️⃣ execution-environment.yml
+
+📌 Purpose
+"This is the main blueprint that defines how the EE image is built."
+
+version: 3
+
+dependencies:
+  ansible_core:
+    package_pip: ansible-core
+  ansible_runner:
+    package_pip: ansible-runner
+
+  python: requirements.txt
+  galaxy: required-collections.yml
+  system: bindep.txt
+
+images:
+  base_image:
+    name: quay.io/centos/centos:stream9
+    
+🔑 Explanation of parameters
+
+version: 3
+Uses the modern Ansible Builder v3 schema
+Required for structured dependency handling
+images.base_image
+name: quay.io/centos/centos:stream9
+
+👉 Base OS for your container
+
+Why:
+
+Clean minimal OS
+You control everything installed on top
+dependencies.ansible_core
+package_pip: ansible-core
+
+👉 Installs Ansible itself
+
+Why:
+
+Required to run playbooks
+Builder ensures it's properly installed
+dependencies.ansible_runner
+package_pip: ansible-runner
+
+👉 Used by AWX to execute playbooks
+
+Why:
+
+AWX does NOT call Ansible directly
+It uses ansible-runner internally
+dependencies.python
+python: requirements.txt
+
+👉 Installs Python libraries
+
+dependencies.galaxy
+galaxy: required-collections.yml
+
+👉 Installs Ansible collections
+
+dependencies.system
+system: bindep.txt
+
+👉 Installs OS-level packages (via dnf/yum)
+
+2️⃣ requirements.txt
+pyvmomi
+requests
+
+📌 Purpose
+
+Python dependencies required by your automation.
+
+🔑 Explanation
+pyvmomi
+👉 VMware API SDK (required for vSphere automation)
+requests
+👉 HTTP communication library (used by many modules)
+3️⃣ required-collections.yml
+collections:
+  - name: community.vmware
+  - name: ansible.posix
+📌 Purpose
+
+Defines Ansible collections to install.
+
+🔑 Explanation
+community.vmware
+👉 Provides VMware modules:
+vm creation
+snapshot
+power operations
+ansible.posix
+👉 Provides Linux/Unix modules:
+file operations
+permissions
+system tasks
+=========================================================================================================================================================================
+4️⃣ bindep.txt
+gcc [platform:rpm]
+python3-devel [platform:rpm]
+openssl-devel [platform:rpm]
+libffi-devel [platform:rpm]
+git [platform:rpm]
+sshpass [platform:rpm]
+
+
+📌 Purpose
+Installs system-level packages needed during build/runtime.
+
+🔑 Explanation
+gcc
+👉 Required to compile Python packages
+python3-devel
+👉 Python headers for building modules
+openssl-devel
+👉 Required for SSL/TLS (used by VMware API)
+libffi-devel
+👉 Needed by cryptography libraries
+git
+👉 Required if pulling roles/collections from Git
+sshpass
+👉 Used for SSH automation (password-based)
+
+=========================================================================================================================================================================
+5️⃣ context/ (Auto-generated)
+📌 Purpose
+
+Generated by:
+
+ansible-builder build
+Contains:
+Containerfile (Dockerfile equivalent)
+Build scripts
+Processed dependencies
+
+👉 You do NOT edit this manually.
+
+⚙️ Build Process
+ansible-builder build -t ee-vmware:v1
+What happens internally:
+Create build context
+Pull base image
+Install system packages
+Install Python dependencies
+Install Ansible
+Install collections
+Build final container image
+🧠 How AWX Uses This
+AWX job starts
+AWX creates Kubernetes Pod
+Pod pulls EE image
+ansible-runner executes playbook
+🚀 Benefits Summary
+Feature	Benefit
+Containerized EE	No dependency conflicts
+Versioned images	Reproducible automation
+AWX integration	Scalable execution
+Isolated runtime	Secure execution
+Portable	Works anywhere
+🏁 Conclusion
+
+This Execution Environment provides:
+
+A standardized automation runtime
+VMware-ready automation stack
+Full compatibility with AWX / AAP
+A foundation for platform engineering automation
